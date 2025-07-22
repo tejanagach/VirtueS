@@ -1,0 +1,32 @@
+.slick-slide .slide{
+    width: 350px;
+    height: 250px;
+    @media  (max-width: 768px){
+        width: 350px;
+    height: 550px;
+        
+    }
+    img{
+        width: 100%;
+        height: 100%;
+        object-position: center;
+        object-fit: cover;
+        scale: 0.7;
+        
+    }
+    transition: transform 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    opacity: 1;
+}
+
+
+
+.slick-center .slide {
+         /* Make the center slide bigger */
+    z-index: 2;   
+    img{
+        scale: 1;
+    }              /* Ensure it sits above neighbors */
+  }
+  
