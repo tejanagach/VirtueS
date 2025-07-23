@@ -32,7 +32,7 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
-        pathname: "/", // Cloudinary allows nested media folders
+        pathname: "/**", // Cloudinary allows nested media folders
       },
     ],
   },
