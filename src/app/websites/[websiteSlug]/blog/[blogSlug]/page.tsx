@@ -1,10 +1,12 @@
+// src/app/websites/[websiteSlug]/blog/[blogSlug]/page.tsx
+
 import Image from "next/image";
 import { fetchBlogBySlug } from "@/app/utils/api";
 import { JSX } from "react/jsx-runtime";
 
 function getFullUrl(url?: string) {
   if (!url) return "";
-  return url.startsWith("http") ? url : `http://localhost:1337${url}`;
+  return url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_STRAPI_URL}${url}`;
 }
 
 export default async function BlogDetailPage({
@@ -12,97 +14,87 @@ export default async function BlogDetailPage({
 }: {
   params: { blogSlug: string };
 }) {
-  const blogSlug = await Promise.resolve(params.blogSlug);
-  const blog = await fetchBlogBySlug(blogSlug);
-// console.log("Blog context:", blog.context);
-
-  if (!blog) return <p>Blog not found.</p>;
+  const blog = await fetchBlogBySlug(params.blogSlug);
+  if (!blog) return <p className="pt-24 text-center text-gray-500">Blog not found.</p>;
 
   const imageUrl = getFullUrl(blog.coverImage?.url);
 
-  // 🔁 Recursively render children inside blocks
   const renderChildren = (children: any[]): (JSX.Element | null)[] => {
-  return children.flatMap((child: any, i: number): (JSX.Element | null)[] => {
-    if (child.type === "image") {
-      const src = getFullUrl(child.url);
-      if (!src) return [null];
+    return children.flatMap((child: any, i: number) => {
+      if (child.type === "image") {
+        const src = getFullUrl(child.url);
+        if (!src) return [null];
+        return [
+          <div key={i} className="my-4">
+            <Image
+              src={src}
+              alt={child.alt || "Embedded Image"}
+              width={800}
+              height={400}
+              className="rounded"
+            />
+          </div>,
+        ];
+      }
 
-      return [
-        <div key={i} className="my-4">
-          <Image
-            src={src}
-            alt={child.alt || "Embedded Image"}
-            width={800}
-            height={400}
-            className="rounded"
-          />
-        </div>,
-      ];
+      if (child.text) {
+        return [<span key={i}>{child.text}</span>];
+      }
+
+      if (child.children) {
+        return renderChildren(child.children);
+      }
+
+      return [null];
+    });
+  };
+
+  const renderBlock = (block: any, index: number): JSX.Element | null => {
+    switch (block.type) {
+      case "paragraph":
+        return (
+          <p key={index} className="mb-4">
+            {renderChildren(block.children || [])}
+          </p>
+        );
+      case "heading":
+        const level = block.level ?? 2;
+        const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
+        return (
+          <HeadingTag key={index} className="font-semibold my-4">
+            {renderChildren(block.children || [])}
+          </HeadingTag>
+        );
+      case "image":
+        const src = getFullUrl(block.image?.url);
+        if (!src) return null;
+        return (
+          <div key={index} className="my-6">
+            <Image
+              src={src}
+              alt={block.image?.alternativeText || "Image"}
+              width={block.image?.width || 800}
+              height={block.image?.height || 400}
+              className="rounded"
+            />
+          </div>
+        );
+      case "list":
+        return (
+          <ul key={index} className="list-disc pl-6 my-4">
+            {(block.children || []).map((item: any, i: number) =>
+              renderBlock(item, i)
+            )}
+          </ul>
+        );
+      case "list-item":
+        return (
+          <li key={index}>{renderChildren(block.children || [])}</li>
+        );
+      default:
+        return null;
     }
-
-    if (child.text) {
-      return [<span key={i}>{child.text}</span>];
-    }
-
-    if (child.children) {
-      return renderChildren(child.children);
-    }
-
-    return [null];
-  });
-};
-
-
-  // 🔁 Render each block
- const renderBlock = (block: any, index: number): JSX.Element | null => {
-  switch (block.type) {
-    case "paragraph":
-      return (
-        <p key={index} className="mb-4">
-          {renderChildren(block.children || [])}
-        </p>
-      );
-    case "heading":
-      const level = block.level ?? 2;
-      const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
-      return (
-        <HeadingTag key={index} className="font-semibold my-4">
-          {renderChildren(block.children || [])}
-        </HeadingTag>
-      );
-    case "image":
-      const src = getFullUrl(block.image?.url);
-      if (!src) return null;
-      return (
-        <div key={index} className="my-6">
-          <Image
-            src={src}
-            alt={block.image?.alternativeText || "Image"}
-            width={block.image?.width || 800}
-            height={block.image?.height || 400}
-            className="rounded"
-          />
-        </div>
-      );
-    case "list":
-      return (
-        <ul key={index} className="list-disc pl-6 my-4">
-          {(block.children || []).map((item: any, i: number) =>
-            renderBlock(item, i)
-          )}
-        </ul>
-      );
-    case "list-item":
-      return (
-        <li key={index}>
-          {renderChildren(block.children || [])}
-        </li>
-      );
-    default:
-      return null;
-  }
-};
-
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 pt-24 pb-10">
@@ -132,7 +124,7 @@ export default async function BlogDetailPage({
 
       {/* 📸 Additional Image Gallery */}
       {blog.images?.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10">
           {blog.images.map((img: any, index: number) => {
             const imgUrl = getFullUrl(img.url);
             if (!imgUrl) return null;

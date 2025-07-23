@@ -1,6 +1,7 @@
-const STRAPI_URL = "http://localhost:1337";
+// const STRAPI_URL = "http://localhost:1337";
 
 // utils/api.ts
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 
 export async function fetchBlogsByWebsite(
   websiteSlug: string,
@@ -8,7 +9,7 @@ export async function fetchBlogsByWebsite(
   pageSize: number = 6
 ) {
   const res = await fetch(
-    `http://localhost:1337/api/blogs?filters[website][slug][$eq]=${websiteSlug}&populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    `${STRAPI_URL}7/api/blogs?filters[website][slug][$eq]=${websiteSlug}&populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
     { cache: "no-store" }
   );
 

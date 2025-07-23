@@ -5,6 +5,8 @@ import Image from "next/image";
 import { fetchBlogsByWebsite } from "@/app/utils/api";
 import { notFound } from "next/navigation";
 
+const STRAPI_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:1337";
+
 export default async function WebsiteBlogsPage({
   params,
   searchParams,
@@ -20,6 +22,7 @@ export default async function WebsiteBlogsPage({
       : searchParams.page || "1",
     10
   );
+
   const pageSize = 3;
 
   const response = await fetchBlogsByWebsite(websiteSlug, currentPage, pageSize);
@@ -39,7 +42,7 @@ export default async function WebsiteBlogsPage({
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {blogs.map((blog: any) => {
           const imageUrl = blog.coverImage?.formats?.small?.url
-            ? `http://localhost:1337${blog.coverImage.formats.small.url}`
+            ? `${STRAPI_URL}${blog.coverImage.formats.small.url}`
             : null;
 
           return (
@@ -55,6 +58,8 @@ export default async function WebsiteBlogsPage({
                     alt={blog.title}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    priority
                   />
                 </div>
               )}
@@ -84,10 +89,9 @@ export default async function WebsiteBlogsPage({
           href={`/websites/${websiteSlug}?page=${currentPage - 1}`}
           className={`px-4 py-2 rounded ${
             currentPage <= 1
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-gray-300 text-gray-500 pointer-events-none"
               : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
-          aria-disabled={currentPage <= 1}
         >
           Previous
         </Link>
@@ -100,7 +104,7 @@ export default async function WebsiteBlogsPage({
             className={`px-3 py-1 rounded ${
               pageNum === currentPage
                 ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-700"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             {pageNum}
@@ -112,10 +116,9 @@ export default async function WebsiteBlogsPage({
           href={`/websites/${websiteSlug}?page=${currentPage + 1}`}
           className={`px-4 py-2 rounded ${
             currentPage >= totalPages
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-gray-300 text-gray-500 pointer-events-none"
               : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
-          aria-disabled={currentPage >= totalPages}
         >
           Next
         </Link>
