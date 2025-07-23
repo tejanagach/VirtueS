@@ -26,7 +26,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-      hostname: process.env.NEXT_PUBLIC_STRAPI_HOST?.replace("https://", ""),
+      hostname: process.env.NEXT_PUBLIC_STRAPI_API_URL?.replace("https://", ""),
         port: "1337",
         pathname: "/uploads/**",
       },
