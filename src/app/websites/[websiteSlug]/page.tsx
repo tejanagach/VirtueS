@@ -1,12 +1,10 @@
 // src/app/websites/[websiteSlug]/page.tsx
-
+ 
 import Link from "next/link";
 import Image from "next/image";
 import { fetchBlogsByWebsite } from "@/app/utils/api";
 import { notFound } from "next/navigation";
-
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
-
+ 
 export default async function WebsiteBlogsPage({
   params,
   searchParams,
@@ -15,36 +13,37 @@ export default async function WebsiteBlogsPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const { websiteSlug } = params;
-
+ 
   const currentPage = parseInt(
     Array.isArray(searchParams.page)
       ? searchParams.page[0]
       : searchParams.page || "1",
     10
   );
-
   const pageSize = 3;
-
+ 
   const response = await fetchBlogsByWebsite(websiteSlug, currentPage, pageSize);
-
+ 
   if (!response || !response.blogs || response.blogs.length === 0) {
     return (
       <div className="pt-28 text-center text-gray-500">No blogs found.</div>
     );
   }
-
+ 
   const { blogs, pagination } = response;
-  const totalPages = pagination.pageCount;
-
+  const totalPages = pagination?.pageCount || 1;
+ 
   return (
     <div className="pt-28 p-6 max-w-6xl mx-auto">
       {/* Blogs Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {blogs.map((blog: any) => {
           const imageUrl = blog.coverImage?.formats?.small?.url
-            ? `${STRAPI_URL}${blog.coverImage.formats.small.url}`
+            ? blog.coverImage.formats.small.url.startsWith("http")
+              ? blog.coverImage.formats.small.url
+              : `https://cms-virtueserve.onrender.com${blog.coverImage.formats.small.url}`
             : null;
-
+ 
           return (
             <Link
               key={blog.id}
@@ -58,8 +57,6 @@ export default async function WebsiteBlogsPage({
                     alt={blog.title}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    priority
                   />
                 </div>
               )}
@@ -68,7 +65,10 @@ export default async function WebsiteBlogsPage({
                   {blog.title}
                 </h2>
                 <p className="text-gray-600 text-sm line-clamp-3">
-                  {blog.content}
+                  {/* Optional: clean up HTML from rich text if needed */}
+                  {typeof blog.content === "string"
+                    ? blog.content.slice(0, 200)
+                    : "Blog content here..."}
                 </p>
                 {blog.publishedAt && (
                   <p className="text-gray-500 text-xs mt-2">
@@ -81,22 +81,21 @@ export default async function WebsiteBlogsPage({
           );
         })}
       </div>
-
+ 
       {/* Pagination Controls */}
       <div className="mt-10 flex justify-center items-center gap-2 flex-wrap">
-        {/* Previous Button */}
         <Link
           href={`/websites/${websiteSlug}?page=${currentPage - 1}`}
           className={`px-4 py-2 rounded ${
             currentPage <= 1
-              ? "bg-gray-300 text-gray-500 pointer-events-none"
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
+          aria-disabled={currentPage <= 1}
         >
           Previous
         </Link>
-
-        {/* Page Numbers */}
+ 
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
           <Link
             key={pageNum}
@@ -104,21 +103,21 @@ export default async function WebsiteBlogsPage({
             className={`px-3 py-1 rounded ${
               pageNum === currentPage
                 ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 text-gray-700"
             }`}
           >
             {pageNum}
           </Link>
         ))}
-
-        {/* Next Button */}
+ 
         <Link
           href={`/websites/${websiteSlug}?page=${currentPage + 1}`}
           className={`px-4 py-2 rounded ${
             currentPage >= totalPages
-              ? "bg-gray-300 text-gray-500 pointer-events-none"
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
+          aria-disabled={currentPage >= totalPages}
         >
           Next
         </Link>

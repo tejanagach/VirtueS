@@ -1,34 +1,50 @@
-// const STRAPI_URL = "http://localhost:1337";
-
-// utils/api.ts
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL|| "http://localhost:1337";
+const STRAPI_URL = "https://cms-virtueserve.onrender.com";
 
 export async function fetchBlogsByWebsite(
   websiteSlug: string,
   page: number = 1,
   pageSize: number = 6
 ) {
-  const res = await fetch(
-    `${STRAPI_URL}7/api/blogs?filters[website][slug][$eq]=${websiteSlug}&populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
-    { cache: "no-store" }
-  );
+  try {
+    const url = `${STRAPI_URL}/api/blogs?filters[website][slug][$eq]=${encodeURIComponent(
+      websiteSlug
+    )}&populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
 
-  if (!res.ok) return null;
+    const res = await fetch(url, { cache: "no-store" });
 
-  const json = await res.json();
-  return {
-    blogs: json.data,
-    pagination: json.meta.pagination,
-  };
+    if (!res.ok) {
+      console.error("Failed to fetch blogs by website:", res.statusText);
+      return null;
+    }
+
+    const json = await res.json();
+    return {
+      blogs: json.data,
+      pagination: json.meta.pagination,
+    };
+  } catch (err) {
+    console.error("Error fetching blogs by website:", err);
+    return null;
+  }
 }
 
-
 export async function fetchBlogBySlug(blogSlug: string) {
-  const res = await fetch(
-    `${STRAPI_URL}/api/blogs?filters[slug][$eq]=${blogSlug}&populate=*`,
-    { cache: "no-store" }
-  );
+  try {
+    const url = `${STRAPI_URL}/api/blogs?filters[slug][$eq]=${encodeURIComponent(
+      blogSlug
+    )}&populate=*`;
 
-  const data = await res.json();
-  return data?.data?.[0] || null;
+    const res = await fetch(url, { cache: "no-store" });
+
+    if (!res.ok) {
+      console.error("Failed to fetch blog by slug:", res.statusText);
+      return null;
+    }
+
+    const data = await res.json();
+    return data?.data?.[0] || null;
+  } catch (err) {
+    console.error("Error fetching blog by slug:", err);
+    return null;
+  }
 }
