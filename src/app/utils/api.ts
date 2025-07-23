@@ -1,7 +1,7 @@
 // const STRAPI_URL = "http://localhost:1337";
 
 // utils/api.ts
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL|| "http://localhost:1337";
 
 export async function fetchBlogsByWebsite(
   websiteSlug: string,

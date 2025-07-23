@@ -26,7 +26,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "localhost",
+        hostname: "cms-virtueserve.onrender.com",
         port: "1337",
         pathname: "/uploads/**",
       },
