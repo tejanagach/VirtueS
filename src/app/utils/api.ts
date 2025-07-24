@@ -1,4 +1,4 @@
-const STRAPI_URL = "https://cms-virtueserve.onrender.com";
+const STRAPI_URL = "https://cms-virtueserve.onrender1.com";
 
 export async function fetchBlogsByWebsite(
   websiteSlug: string,

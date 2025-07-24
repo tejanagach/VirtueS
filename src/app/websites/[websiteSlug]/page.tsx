@@ -41,7 +41,7 @@ export default async function WebsiteBlogsPage({
           const imageUrl = blog.coverImage?.formats?.small?.url
             ? blog.coverImage.formats.small.url.startsWith("http")
               ? blog.coverImage.formats.small.url
-              : `https://cms-virtueserve.onrender.com${blog.coverImage.formats.small.url}`
+              : `https://cms-virtueserve1.onrender.com${blog.coverImage.formats.small.url}`
             : null;
  
           return (

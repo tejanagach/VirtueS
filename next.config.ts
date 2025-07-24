@@ -1,19 +1,3 @@
-
-//  /** @type {import('next').NextConfig} */
-// const nextConfig = {
-//   images: {
-//     remotePatterns: [
-//       {
-//         protocol: "http",
-//         hostname: "localhost",
-//         port: "1337",
-//         pathname: "/uploads/**",
-//       },
-//     ],
-//   },
-// };
-
-// export default nextConfig;
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -26,13 +10,13 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "cms-virtueserve.onrender.com",
-        pathname: "/uploads/",
+        hostname: "cms-virtueserve1.onrender.com",
+        pathname: "/uploads/**", // ✅ Corrected for Render/Strapi uploads
       },
       {
         protocol: "https",
-        hostname: "res.cloudinary.com",
-        pathname: "/**", // Cloudinary allows nested media folders
+        hostname: "xolsmduhuujgmdeyfabp.supabase.co", // ✅ Replace with actual Supabase project domain
+        pathname: "/storage/v1/object/public/**", // ✅ All public files
       },
     ],
   },

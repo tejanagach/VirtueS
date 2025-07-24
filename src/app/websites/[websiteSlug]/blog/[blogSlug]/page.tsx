@@ -4,7 +4,7 @@ import { JSX } from "react/jsx-runtime";
  
 function getFullUrl(url?: string) {
   if (!url) return "";
-  return url.startsWith("http") ? url : `https://cms-virtueserve.onrender.com${url}`;
+  return url.startsWith("http") ? url : `https://cms-virtueserve1.onrender.com${url}`;
 }
  
 export default async function BlogDetailPage({
