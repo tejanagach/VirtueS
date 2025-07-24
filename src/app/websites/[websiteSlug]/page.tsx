@@ -1,10 +1,20 @@
 // src/app/websites/[websiteSlug]/page.tsx
- 
+
 import Link from "next/link";
 import Image from "next/image";
 import { fetchBlogsByWebsite } from "@/app/utils/api";
 import { notFound } from "next/navigation";
- 
+
+// ✅ Reusable helper for Supabase images
+function getFullUrl(url?: string) {
+  if (!url) return "";
+
+  if (url.startsWith("http")) return url;
+
+  // Replace with your actual Supabase project domain
+  return `https://xolsmduhuujgmdeyfab.supabase.co/storage/v1/object/public/${url.startsWith("/") ? url.slice(1) : url}`;
+}
+
 export default async function WebsiteBlogsPage({
   params,
   searchParams,
@@ -13,7 +23,7 @@ export default async function WebsiteBlogsPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const { websiteSlug } = params;
- 
+
   const currentPage = parseInt(
     Array.isArray(searchParams.page)
       ? searchParams.page[0]
@@ -21,29 +31,27 @@ export default async function WebsiteBlogsPage({
     10
   );
   const pageSize = 3;
- 
+
   const response = await fetchBlogsByWebsite(websiteSlug, currentPage, pageSize);
- 
+
   if (!response || !response.blogs || response.blogs.length === 0) {
     return (
       <div className="pt-28 text-center text-gray-500">No blogs found.</div>
     );
   }
- 
+
   const { blogs, pagination } = response;
   const totalPages = pagination?.pageCount || 1;
- 
+
   return (
     <div className="pt-28 p-6 max-w-6xl mx-auto">
       {/* Blogs Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {blogs.map((blog: any) => {
-          const imageUrl = blog.coverImage?.formats?.small?.url
-            ? blog.coverImage.formats.small.url.startsWith("http")
-              ? blog.coverImage.formats.small.url
-              : `https://cms-virtueserve1.onrender.com${blog.coverImage.formats.small.url}`
-            : null;
- 
+          const rawUrl =
+            blog.coverImage?.formats?.small?.url || blog.coverImage?.url;
+          const imageUrl = getFullUrl(rawUrl);
+
           return (
             <Link
               key={blog.id}
@@ -65,7 +73,6 @@ export default async function WebsiteBlogsPage({
                   {blog.title}
                 </h2>
                 <p className="text-gray-600 text-sm line-clamp-3">
-                  {/* Optional: clean up HTML from rich text if needed */}
                   {typeof blog.content === "string"
                     ? blog.content.slice(0, 200)
                     : "Blog content here..."}
@@ -81,7 +88,7 @@ export default async function WebsiteBlogsPage({
           );
         })}
       </div>
- 
+
       {/* Pagination Controls */}
       <div className="mt-10 flex justify-center items-center gap-2 flex-wrap">
         <Link
@@ -95,7 +102,7 @@ export default async function WebsiteBlogsPage({
         >
           Previous
         </Link>
- 
+
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
           <Link
             key={pageNum}
@@ -109,7 +116,7 @@ export default async function WebsiteBlogsPage({
             {pageNum}
           </Link>
         ))}
- 
+
         <Link
           href={`/websites/${websiteSlug}?page=${currentPage + 1}`}
           className={`px-4 py-2 rounded ${

@@ -1,30 +1,35 @@
 import Image from "next/image";
 import { fetchBlogBySlug } from "@/app/utils/api";
 import { JSX } from "react/jsx-runtime";
- 
+
+// ✅ Updated to work with Supabase
 function getFullUrl(url?: string) {
   if (!url) return "";
-  return url.startsWith("http") ? url : `https://cms-virtueserve1.onrender.com${url}`;
+
+  if (url.startsWith("http")) return url;
+
+  // 👇 Replace this with your actual Supabase project URL
+  return `https://xolsmduhuujgmdeyfab.supabase.co/storage/v1/object/public/${url.startsWith("/") ? url.slice(1) : url}`;
 }
- 
+
 export default async function BlogDetailPage({
   params,
 }: {
   params: { blogSlug: string };
 }) {
-  const blogSlug = params.blogSlug; // ❌ Removed unnecessary await
+  const blogSlug = params.blogSlug;
   const blog = await fetchBlogBySlug(blogSlug);
- 
+
   if (!blog) return <p>Blog not found.</p>;
- 
+
   const imageUrl = getFullUrl(blog.coverImage?.url);
- 
+
   const renderChildren = (children: any[]): (JSX.Element | null)[] => {
     return children.flatMap((child: any, i: number): (JSX.Element | null)[] => {
       if (child.type === "image") {
         const src = getFullUrl(child.url || child.image?.url);
         if (!src) return [null];
- 
+
         return [
           <div key={i} className="my-4">
             <Image
@@ -37,19 +42,19 @@ export default async function BlogDetailPage({
           </div>,
         ];
       }
- 
+
       if (child.text) {
         return [<span key={i}>{child.text}</span>];
       }
- 
+
       if (child.children) {
         return renderChildren(child.children);
       }
- 
+
       return [null];
     });
   };
- 
+
   const renderBlock = (block: any, index: number): JSX.Element | null => {
     switch (block.type) {
       case "paragraph":
@@ -58,7 +63,7 @@ export default async function BlogDetailPage({
             {renderChildren(block.children || [])}
           </p>
         );
- 
+
       case "heading":
         const level = block.level ?? 2;
         const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
@@ -67,7 +72,7 @@ export default async function BlogDetailPage({
             {renderChildren(block.children || [])}
           </HeadingTag>
         );
- 
+
       case "image":
         const imgUrl = getFullUrl(block.url || block.image?.url);
         if (!imgUrl) return null;
@@ -82,7 +87,7 @@ export default async function BlogDetailPage({
             />
           </div>
         );
- 
+
       case "list":
         return (
           <ul key={index} className="list-disc pl-6 my-4">
@@ -91,7 +96,7 @@ export default async function BlogDetailPage({
             )}
           </ul>
         );
- 
+
       case "list-item":
         return (
           <li key={index}>
@@ -100,27 +105,27 @@ export default async function BlogDetailPage({
               : block.text}
           </li>
         );
- 
+
       default:
         return null;
     }
   };
- 
+
   const contextBlocks =
     typeof blog.context === "string"
       ? JSON.parse(blog.context)
       : blog.context;
- 
+
   return (
     <div className="max-w-3xl mx-auto px-4 pt-24 pb-10">
       <h1 className="text-4xl font-bold mb-4">{blog.title}</h1>
- 
+
       {blog.publishedAt && (
         <p className="text-gray-500 text-sm mb-6">
           Published on {new Date(blog.publishedAt).toLocaleDateString()}
         </p>
       )}
- 
+
       {imageUrl && (
         <div className="relative w-full h-64 mb-6">
           <Image
@@ -131,19 +136,19 @@ export default async function BlogDetailPage({
           />
         </div>
       )}
- 
+
       <div className="prose max-w-none">
         {contextBlocks?.map((block: any, index: number) =>
           renderBlock(block, index)
         )}
       </div>
- 
+
       {blog.images?.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           {blog.images.map((img: any, index: number) => {
             const imgUrl = getFullUrl(img.url);
             if (!imgUrl) return null;
- 
+
             return (
               <div key={index} className="relative w-full h-64">
                 <Image

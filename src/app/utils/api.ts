@@ -1,50 +1,65 @@
-const STRAPI_URL = "https://cms-virtueserve.onrender1.com";
+import { createClient } from '@supabase/supabase-js';
 
+// Supabase client setup
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_API_KEY!
+);
+
+// ✅ Fetch all blogs for a website slug (with pagination)
 export async function fetchBlogsByWebsite(
   websiteSlug: string,
   page: number = 1,
   pageSize: number = 6
 ) {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   try {
-    const url = `${STRAPI_URL}/api/blogs?filters[website][slug][$eq]=${encodeURIComponent(
-      websiteSlug
-    )}&populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
+    const { data, error, count } = await supabase
+      .from("blogs")
+      .select("*, website!inner(*)", { count: "exact" }) // include website relation
+      .eq("website.slug", websiteSlug)
+      .range(from, to)
+      .order("publishedAt", { ascending: false });
 
-    const res = await fetch(url, { cache: "no-store" });
-
-    if (!res.ok) {
-      console.error("Failed to fetch blogs by website:", res.statusText);
+    if (error) {
+      console.error("Supabase fetchBlogsByWebsite error:", error.message);
       return null;
     }
 
-    const json = await res.json();
     return {
-      blogs: json.data,
-      pagination: json.meta.pagination,
+      blogs: data,
+      pagination: {
+        page,
+        pageSize,
+        pageCount: Math.ceil((count || 0) / pageSize),
+        total: count || 0,
+      },
     };
   } catch (err) {
-    console.error("Error fetching blogs by website:", err);
+    console.error("Unexpected error fetching blogs:", err);
     return null;
   }
 }
 
+// ✅ Fetch a single blog by its slug
 export async function fetchBlogBySlug(blogSlug: string) {
   try {
-    const url = `${STRAPI_URL}/api/blogs?filters[slug][$eq]=${encodeURIComponent(
-      blogSlug
-    )}&populate=*`;
+    const { data, error } = await supabase
+      .from("blogs")
+      .select("*, website(*)") // optional join
+      .eq("slug", blogSlug)
+      .single();
 
-    const res = await fetch(url, { cache: "no-store" });
-
-    if (!res.ok) {
-      console.error("Failed to fetch blog by slug:", res.statusText);
+    if (error) {
+      console.error("Supabase fetchBlogBySlug error:", error.message);
       return null;
     }
 
-    const data = await res.json();
-    return data?.data?.[0] || null;
+    return data;
   } catch (err) {
-    console.error("Error fetching blog by slug:", err);
+    console.error("Unexpected error fetching blog:", err);
     return null;
   }
 }
