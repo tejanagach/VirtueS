@@ -16,7 +16,7 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "xolsmduhuujgmdeyfabp.supabase.co", // ✅ Replace with actual Supabase project domain
-        pathname: "/storage/v1/object/public/**", // ✅ All public files
+        // pathname: "/storage/v1/object/public/**", // ✅ All public files
       },
     ],
   },

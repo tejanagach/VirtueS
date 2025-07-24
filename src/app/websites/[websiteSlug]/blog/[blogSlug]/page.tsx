@@ -1,167 +1,83 @@
-import Image from "next/image";
-import { fetchBlogBySlug } from "@/app/utils/api";
-import { JSX } from "react/jsx-runtime";
+// app/[websiteSlug]/[blogSlug]/page.tsx
 
-// ✅ Updated to work with Supabase
-function getFullUrl(url?: string) {
-  if (!url) return "";
-
-  if (url.startsWith("http")) return url;
-
-  // 👇 Replace this with your actual Supabase project URL
-  return `https://xolsmduhuujgmdeyfab.supabase.co/storage/v1/object/public/${url.startsWith("/") ? url.slice(1) : url}`;
-}
-
-export default async function BlogDetailPage({
+export default async function BlogPage({
   params,
 }: {
-  params: { blogSlug: string };
+  params: { websiteSlug: string; blogSlug: string };
 }) {
-  const blogSlug = params.blogSlug;
-  const blog = await fetchBlogBySlug(blogSlug);
+  const { blogSlug } = params;
 
-  if (!blog) return <p>Blog not found.</p>;
+  const res = await fetch(
+    `https://cms-virtueserve1.onrender.com/api/blogs?filters[slug][$eq]=${blogSlug}&populate=coverImage,images,website`,
+    { cache: "no-store" }
+  );
 
-  const imageUrl = getFullUrl(blog.coverImage?.url);
+  const json = await res.json();
+  const blog = json.data[0]?.attributes;
 
-  const renderChildren = (children: any[]): (JSX.Element | null)[] => {
-    return children.flatMap((child: any, i: number): (JSX.Element | null)[] => {
-      if (child.type === "image") {
-        const src = getFullUrl(child.url || child.image?.url);
-        if (!src) return [null];
+  if (!blog) return <p>Blog not found</p>;
 
-        return [
-          <div key={i} className="my-4">
-            <Image
-              src={src}
-              alt={child.alt || "Embedded Image"}
-              width={800}
-              height={400}
-              className="rounded"
-            />
-          </div>,
-        ];
-      }
+  // Supabase base URL (replace with your actual project-ref)
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 
-      if (child.text) {
-        return [<span key={i}>{child.text}</span>];
-      }
+  // Safely construct URLs
+  const coverImagePath = blog.coverImage?.data?.attributes?.url;
+  const coverImageUrl = coverImagePath?.startsWith("http")
+    ? coverImagePath
+    : `${SUPABASE_URL}/${coverImagePath}`;
 
-      if (child.children) {
-        return renderChildren(child.children);
-      }
-
-      return [null];
-    });
-  };
-
-  const renderBlock = (block: any, index: number): JSX.Element | null => {
-    switch (block.type) {
-      case "paragraph":
-        return (
-          <p key={index} className="mb-4">
-            {renderChildren(block.children || [])}
-          </p>
-        );
-
-      case "heading":
-        const level = block.level ?? 2;
-        const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
-        return (
-          <HeadingTag key={index} className="font-semibold my-4">
-            {renderChildren(block.children || [])}
-          </HeadingTag>
-        );
-
-      case "image":
-        const imgUrl = getFullUrl(block.url || block.image?.url);
-        if (!imgUrl) return null;
-        return (
-          <div key={index} className="my-6">
-            <Image
-              src={imgUrl}
-              alt={block.alt || block.image?.alternativeText || "Image"}
-              width={block.image?.width || 800}
-              height={block.image?.height || 400}
-              className="rounded"
-            />
-          </div>
-        );
-
-      case "list":
-        return (
-          <ul key={index} className="list-disc pl-6 my-4">
-            {(block.children || []).map((item: any, i: number) =>
-              renderBlock(item, i)
-            )}
-          </ul>
-        );
-
-      case "list-item":
-        return (
-          <li key={index}>
-            {Array.isArray(block.children)
-              ? renderChildren(block.children)
-              : block.text}
-          </li>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const contextBlocks =
-    typeof blog.context === "string"
-      ? JSON.parse(blog.context)
-      : blog.context;
+  const images = blog.images?.data || [];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 pt-24 pb-10">
-      <h1 className="text-4xl font-bold mb-4">{blog.title}</h1>
+    <div className="min-h-screen bg-[#f9f9f9] py-12 px-4 md:px-8">
+      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8">
+        <h1 className="text-4xl font-bold mb-4 text-gray-900 leading-tight">
+          {blog.title}
+        </h1>
 
-      {blog.publishedAt && (
-        <p className="text-gray-500 text-sm mb-6">
-          Published on {new Date(blog.publishedAt).toLocaleDateString()}
-        </p>
-      )}
+        {blog.website?.data && (
+          <p className="text-sm text-gray-600 mb-4">
+            Published on <strong>{blog.website.data.attributes.name}</strong>
+          </p>
+        )}
 
-      {imageUrl && (
-        <div className="relative w-full h-64 mb-6">
-          <Image
-            src={imageUrl}
+        {coverImageUrl && (
+          <img
+            src={coverImageUrl}
             alt={blog.title}
-            fill
-            className="object-cover rounded"
+            className="w-full h-[400px] object-cover rounded-lg mb-8"
           />
-        </div>
-      )}
+        )}
 
-      <div className="prose max-w-none">
-        {contextBlocks?.map((block: any, index: number) =>
-          renderBlock(block, index)
+        <div className="prose prose-lg prose-slate max-w-none">
+          <p>{blog.content}</p>
+        </div>
+
+        {images.length > 0 && (
+          <>
+            <h2 className="text-2xl font-semibold mt-10 mb-4 text-gray-800">
+              Gallery
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {images.map((img: any, idx: number) => {
+                const imgPath = img.attributes?.url;
+                const imgUrl = imgPath?.startsWith("http")
+                  ? imgPath
+                  : `${SUPABASE_URL}/${imgPath}`;
+
+                return (
+                  <img
+                    key={idx}
+                    src={imgUrl}
+                    alt={`Blog Image ${idx + 1}`}
+                    className="w-full h-[200px] object-cover rounded-md"
+                  />
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
-
-      {blog.images?.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          {blog.images.map((img: any, index: number) => {
-            const imgUrl = getFullUrl(img.url);
-            if (!imgUrl) return null;
-
-            return (
-              <div key={index} className="relative w-full h-64">
-                <Image
-                  src={imgUrl}
-                  alt={img.name || "Image"}
-                  fill
-                  className="object-cover rounded"
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

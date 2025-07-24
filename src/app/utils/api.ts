@@ -1,65 +1,50 @@
-import { createClient } from '@supabase/supabase-js';
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 
-// Supabase client setup
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_API_KEY!
-);
-
-// ✅ Fetch all blogs for a website slug (with pagination)
-export async function fetchBlogsByWebsite(
-  websiteSlug: string,
-  page: number = 1,
-  pageSize: number = 6
-) {
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
-  try {
-    const { data, error, count } = await supabase
-      .from("blogs")
-      .select("*, website!inner(*)", { count: "exact" }) // include website relation
-      .eq("website.slug", websiteSlug)
-      .range(from, to)
-      .order("publishedAt", { ascending: false });
-
-    if (error) {
-      console.error("Supabase fetchBlogsByWebsite error:", error.message);
-      return null;
-    }
-
-    return {
-      blogs: data,
-      pagination: {
-        page,
-        pageSize,
-        pageCount: Math.ceil((count || 0) / pageSize),
-        total: count || 0,
-      },
-    };
-  } catch (err) {
-    console.error("Unexpected error fetching blogs:", err);
-    return null;
-  }
+/**
+ * Returns full URL for images hosted either on Strapi (relative path) or already absolute (Supabase or other).
+ */
+function getFullUrl(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `${STRAPI_URL}${url}`;
 }
 
-// ✅ Fetch a single blog by its slug
-export async function fetchBlogBySlug(blogSlug: string) {
-  try {
-    const { data, error } = await supabase
-      .from("blogs")
-      .select("*, website(*)") // optional join
-      .eq("slug", blogSlug)
-      .single();
+export async function fetchWebsites() {
+  const res = await fetch(`${STRAPI_URL}/api/websites?populate=*`);
+  if (!res.ok) throw new Error("Failed to fetch websites");
 
-    if (error) {
-      console.error("Supabase fetchBlogBySlug error:", error.message);
-      return null;
-    }
+  const data = await res.json();
+  const updated = data.data.map((website: any) => {
+    const rawUrl = website.attributes.coverImage?.data?.attributes?.url || "";
+    website.attributes.coverImageUrl = getFullUrl(rawUrl);
+    return website;
+  });
 
-    return data;
-  } catch (err) {
-    console.error("Unexpected error fetching blog:", err);
-    return null;
-  }
+  return updated;
 }
+
+export async function fetchWebsiteBySlug(slug: string) {
+  const res = await fetch(
+    `${STRAPI_URL}/api/websites?filters[slug][$eq]=${slug}&populate[blogs][populate]=coverImage`
+  );
+
+  const json = await res.json();
+  return json.data?.[0]; // get the first matching website
+}
+
+export async function fetchBlogBySlug(slug: string) {
+  const res = await fetch(`${STRAPI_URL}/api/blogs?filters[slug][$eq]=${slug}&populate=*`);
+  if (!res.ok) throw new Error("Failed to fetch blog");
+
+  const data = await res.json();
+  const blog = data?.data?.[0] || null;
+
+  if (blog?.attributes.coverImage?.data?.attributes?.url) {
+    const rawUrl = blog.attributes.coverImage.data.attributes.url;
+    blog.attributes.coverImageUrl = getFullUrl(rawUrl);
+  }
+
+  return blog;
+}
+
