@@ -24,14 +24,23 @@ export async function fetchWebsites() {
   return updated;
 }
 
+
 export async function fetchWebsiteBySlug(slug: string) {
-  const res = await fetch(
-    `${STRAPI_URL}/api/websites?filters[slug][$eq]=${slug}&populate[blogs][populate]=coverImage`
-  );
+  const url = new URL("/api/websites", STRAPI_URL);
+
+  url.searchParams.append("filters[slug][$eq]", slug);
+  url.searchParams.append("populate[blogs][populate]", "coverImage");
+
+  const res = await fetch(url.toString());
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch website by slug: ${res.status}`);
+  }
 
   const json = await res.json();
-  return json.data?.[0]; // get the first matching website
+  return json.data?.[0]; // Get the first matching website
 }
+
 
 export async function fetchBlogBySlug(slug: string) {
   const res = await fetch(`${STRAPI_URL}/api/blogs?filters[slug][$eq]=${slug}&populate=*`);
