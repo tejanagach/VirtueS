@@ -1,83 +1,97 @@
-// app/[websiteSlug]/[blogSlug]/page.tsx
+// app/websites/[websiteSlug]/blog/[blogSlug]/page.tsx
+import { fetchBlogBySlug } from "@/app/utils/api";
+import Image from "next/image";
+import ReactMarkdown from "react-markdown";
 
-export default async function BlogPage({
+export default async function BlogDetailPage({
   params,
 }: {
-  params: { websiteSlug: string; blogSlug: string };
+  params: { blogSlug: string };
 }) {
-  const { blogSlug } = params;
-
-  const res = await fetch(
-    `https://cms-virtueserve1.onrender.com/api/blogs?filters[slug][$eq]=${blogSlug}&populate=coverImage,images,website`,
-    { cache: "no-store" }
-  );
-
-  const json = await res.json();
-  const blog = json.data[0]?.attributes;
-
-  if (!blog) return <p>Blog not found</p>;
-
-  // Supabase base URL (replace with your actual project-ref)
+  const blog = await fetchBlogBySlug(params.blogSlug);
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 
-  // Safely construct URLs
-  const coverImagePath = blog.coverImage?.data?.attributes?.url;
-  const coverImageUrl = coverImagePath?.startsWith("http")
-    ? coverImagePath
-    : `${SUPABASE_URL}/${coverImagePath}`;
+  if (!blog) return <p className="mt-32 text-center text-gray-600">Blog not found.</p>;
 
-  const images = blog.images?.data || [];
+  const { title, content, context, coverImage, images } = blog.attributes;
+
+  const coverImageUrl = coverImage?.data?.attributes?.url
+    ? coverImage.data.attributes.url.startsWith("http")
+      ? coverImage.data.attributes.url
+      : `${SUPABASE_URL}${coverImage.data.attributes.url}`
+    : null;
+
+  const galleryImages = images?.data || [];
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9] py-12 px-4 md:px-8">
-      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8">
-        <h1 className="text-4xl font-bold mb-4 text-gray-900 leading-tight">
-          {blog.title}
-        </h1>
+    <div className="max-w-4xl mx-auto px-4 pt-32 pb-16"> {/* top padding added */}
+      <h1 className="text-4xl font-extrabold mb-8 text-gray-900 leading-tight">{title}</h1>
 
-        {blog.website?.data && (
-          <p className="text-sm text-gray-600 mb-4">
-            Published on <strong>{blog.website.data.attributes.name}</strong>
-          </p>
-        )}
+      {/* Cover Image */}
+      {coverImageUrl && (
+        <Image
+          src={coverImageUrl}
+          alt="Cover"
+          width={1200}
+          height={600}
+          className="rounded-lg mb-10 object-cover w-full h-auto max-h-[500px]"
+        />
+      )}
 
-        {coverImageUrl && (
-          <img
-            src={coverImageUrl}
-            alt={blog.title}
-            className="w-full h-[400px] object-cover rounded-lg mb-8"
-          />
-        )}
-
-        <div className="prose prose-lg prose-slate max-w-none">
-          <p>{blog.content}</p>
+      {/* Content Section */}
+      {content && (
+        <div className="text-gray-700 text-lg leading-7 mb-10">
+          <h2 className="text-2xl font-semibold mb-4">Summary</h2>
+          <p>{content}</p>
         </div>
+      )}
 
-        {images.length > 0 && (
-          <>
-            <h2 className="text-2xl font-semibold mt-10 mb-4 text-gray-800">
-              Gallery
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {images.map((img: any, idx: number) => {
-                const imgPath = img.attributes?.url;
-                const imgUrl = imgPath?.startsWith("http")
-                  ? imgPath
-                  : `${SUPABASE_URL}/${imgPath}`;
+      {/* Context Section */}
+      {context && (
+        <div className="text-gray-800 mb-10">
+          <h2 className="text-2xl font-semibold mb-4">Context</h2>
+          <ReactMarkdown
+            components={{
+              img: ({ node, ...props }) => (
+                <img
+                  {...props}
+                  alt={props.alt || "image"}
+                  className="rounded-lg my-4 max-w-full"
+                />
+              ),
+              p: ({ node, ...props }) => <p className="mb-4 leading-relaxed" {...props} />,
+            }}
+          >
+            {context}
+          </ReactMarkdown>
+        </div>
+      )}
 
-                return (
-                  <img
-                    key={idx}
-                    src={imgUrl}
-                    alt={`Blog Image ${idx + 1}`}
-                    className="w-full h-[200px] object-cover rounded-md"
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+      
+
+      {/* Gallery Section */}
+      {galleryImages.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-semibold mb-6 text-gray-800">Gallery</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+            {galleryImages.map((img: any, idx: number) => {
+              const imgPath = img.attributes?.url;
+              const imgUrl = imgPath?.startsWith("http")
+                ? imgPath
+                : `${SUPABASE_URL}${imgPath}`;
+
+              return (
+                <img
+                  key={idx}
+                  src={imgUrl}
+                  alt={`Blog Image ${idx + 1}`}
+                  className="w-full h-[200px] object-cover rounded-md shadow-sm"
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

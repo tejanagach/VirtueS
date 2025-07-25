@@ -4,11 +4,11 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 /**
  * Returns full URL for images hosted either on Strapi (relative path) or already absolute (Supabase or other).
  */
-function getFullUrl(url: string): string {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${STRAPI_URL}${url}`;
-}
+// function getFullUrl(url: string): string {
+//   if (!url) return "";
+//   if (url.startsWith("http")) return url;
+//   return `${STRAPI_URL}${url}`;
+// }
 
 export async function fetchWebsites() {
   const res = await fetch(`${STRAPI_URL}/api/websites?populate=*`);
@@ -42,8 +42,36 @@ export async function fetchWebsiteBySlug(slug: string) {
 }
 
 
+// export async function fetchBlogBySlug(slug: string) {
+//   const res = await fetch(`${STRAPI_URL}/api/blogs?filters[slug][$eq]=${slug}&populate=*`);
+//   if (!res.ok) throw new Error("Failed to fetch blog");
+
+//   const data = await res.json();
+//   const blog = data?.data?.[0] || null;
+
+//   if (blog?.attributes.coverImage?.data?.attributes?.url) {
+//     const rawUrl = blog.attributes.coverImage.data.attributes.url;
+//     blog.attributes.coverImageUrl = getFullUrl(rawUrl);
+//   }
+
+//   return blog;
+// }
+
+
+const SUPABASE_BUCKET_BASE = process.env.NEXT_PUBLIC_SUPABASE_BUCKET_BASE || "";
+
+export const getFullUrl = (path: string) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return `${SUPABASE_BUCKET_BASE}/${path}`;
+};
+
+
 export async function fetchBlogBySlug(slug: string) {
-  const res = await fetch(`${STRAPI_URL}/api/blogs?filters[slug][$eq]=${slug}&populate=*`);
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/blogs?filters[slug][$eq]=${slug}&populate=*`
+  );
+
   if (!res.ok) throw new Error("Failed to fetch blog");
 
   const data = await res.json();
@@ -56,4 +84,5 @@ export async function fetchBlogBySlug(slug: string) {
 
   return blog;
 }
+
 
