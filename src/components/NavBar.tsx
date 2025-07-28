@@ -148,66 +148,77 @@ export const NavBar = () => {
 
       {/* Sidebar Drawer */}
       {isSidebarOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50"
-          onClick={() => setIsSidebarOpen(false)}
-        >
-          <div
-            className="fixed top-0 left-0 h-full w-64 bg-white shadow-lg p-5 z-50"
-            onClick={(e) => e.stopPropagation()}
+  <div
+    className="fixed inset-0 z-50 bg-black bg-opacity-50"
+    onClick={() => setIsSidebarOpen(false)}
+  >
+    <div
+      className="fixed top-0 left-0 h-full w-64 bg-white shadow-lg p-5 z-50 overflow-y-auto"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button className="mb-4" onClick={() => setIsSidebarOpen(false)}>
+        <X className="w-6 h-6" />
+      </button>
+
+      <div className="flex flex-col space-y-4">
+        {/* What we do Dropdown */}
+        <div>
+          <button
+            className="flex items-center w-full font-medium text-left"
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
           >
-            <button className="mb-4" onClick={() => setIsSidebarOpen(false)}>
-              <X className="w-6 h-6" />
-            </button>
-            <div className="flex flex-col space-y-4">
-              {/* What we do Dropdown */}
-              <div>
-                <button
-                  className="flex items-center w-full font-medium text-left" // removed px-2 and justify-between
-                  onClick={() => setIsDropdownOpen((prev) => !prev)}
-                >
-                  What we do
-                  <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isDropdownOpen && (
-                  <div className="ml-4 flex flex-col space-y-2 mt-2">
-                    <Link href="/what-we-do/talent-solution" onClick={handleLinkClick}>
-                      Talent Solution
-                    </Link>
-                    <Link href="/what-we-do/tech-consult" onClick={handleLinkClick}>
-                      Tech Consult
-                    </Link>
-                    <Link href="/what-we-do/product-innovation" onClick={handleLinkClick}>
-                      Product Innovation
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <Link href="/who-we-work-with" onClick={handleLinkClick}>
-                Who we work with
+            What we do
+            <ChevronDown
+              className={`ml-2 h-4 w-4 transition-transform ${
+                isDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+          {isDropdownOpen && (
+            <div className="ml-4 flex flex-col space-y-2 mt-2">
+              <Link href="/what-we-do/talent-solution" onClick={handleLinkClick}>
+                Talent Solution
               </Link>
-              <Link href="/about-us" onClick={handleLinkClick}>
-                About Us
+              <Link href="/what-we-do/tech-consult" onClick={handleLinkClick}>
+                Tech Consult
               </Link>
-              <Link href="/career" onClick={handleLinkClick}>
-                Career
+              <Link href="/what-we-do/product-innovation" onClick={handleLinkClick}>
+                Product Innovation
               </Link>
-              <Link href="/publications" onClick={handleLinkClick}>
-                Publications
-              </Link>
-              <button
-                className="mt-6 px-4 py-2 text-sm font-medium border border-[#3c3c3c] rounded-md hover:bg-[#3c3c3c] hover:text-white"
-                onClick={() => {
-                  setIsSidebarOpen(false);
-                  window.location.href = "mailto:hello@virtueserve.com";
-                }}
-              >
-                Request a call back
-              </button>
             </div>
-          </div>
+          )}
         </div>
-      )}
+
+        <Link href="/who-we-work-with" onClick={handleLinkClick}>
+          Who we work with
+        </Link>
+        <Link href="/about-us" onClick={handleLinkClick}>
+          About Us
+        </Link>
+        <Link href="/career" onClick={handleLinkClick}>
+          Career
+        </Link>
+        <Link href="/publications" onClick={handleLinkClick}>
+          Publications
+        </Link>
+        <Link href="/websites/website" onClick={handleLinkClick}>
+          Blog
+        </Link>
+
+        <button
+          className="mt-6 px-4 py-2 text-sm font-medium border border-[#3c3c3c] rounded-md hover:bg-[#3c3c3c] hover:text-white"
+          onClick={() => {
+            setIsSidebarOpen(false);
+            window.location.href = "mailto:hello@virtueserve.com";
+          }}
+        >
+          Request a call back
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </>
   );
 };

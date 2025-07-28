@@ -25,11 +25,32 @@ export async function fetchWebsites() {
 }
 
 
-export async function fetchWebsiteBySlug(slug: string) {
+// export async function fetchWebsiteBySlug(slug: string) {
+//   const url = new URL("/api/websites", STRAPI_URL);
+
+//   url.searchParams.append("filters[slug][$eq]", slug);
+//   url.searchParams.append("populate[blogs][populate]", "coverImage");
+
+//   const res = await fetch(url.toString());
+
+//   if (!res.ok) {
+//     throw new Error(`Failed to fetch website by slug: ${res.status}`);
+//   }
+
+//   const json = await res.json();
+//   return json.data?.[0]; // Get the first matching website
+// }
+export async function fetchWebsiteBySlug(slug: string, page = 1, pageSize = 3) {
   const url = new URL("/api/websites", STRAPI_URL);
 
   url.searchParams.append("filters[slug][$eq]", slug);
   url.searchParams.append("populate[blogs][populate]", "coverImage");
+  url.searchParams.append("populate[blogs][fields][0]", "title"); // optional - reduce payload
+  url.searchParams.append("populate[blogs][fields][1]", "slug");  // optional
+  url.searchParams.append("populate[blogs][fields][2]", "description"); // optional
+  url.searchParams.append("populate[blogs][fields][3]", "publishedAt"); // optional
+  url.searchParams.append("pagination[page]", page.toString());
+  url.searchParams.append("pagination[pageSize]", pageSize.toString());
 
   const res = await fetch(url.toString());
 
@@ -42,20 +63,24 @@ export async function fetchWebsiteBySlug(slug: string) {
 }
 
 
-// export async function fetchBlogBySlug(slug: string) {
-//   const res = await fetch(`${STRAPI_URL}/api/blogs?filters[slug][$eq]=${slug}&populate=*`);
-//   if (!res.ok) throw new Error("Failed to fetch blog");
 
-//   const data = await res.json();
-//   const blog = data?.data?.[0] || null;
+export async function fetchBlogsByWebsiteSlug(slug: string, page = 1, pageSize = 3) {
+  const url = new URL("/api/blogs", STRAPI_URL);
+  url.searchParams.append("filters[website][slug][$eq]", slug);
+  url.searchParams.append("pagination[page]", page.toString());
+  url.searchParams.append("pagination[pageSize]", pageSize.toString());
+  url.searchParams.append("populate", "coverImage");
 
-//   if (blog?.attributes.coverImage?.data?.attributes?.url) {
-//     const rawUrl = blog.attributes.coverImage.data.attributes.url;
-//     blog.attributes.coverImageUrl = getFullUrl(rawUrl);
-//   }
+  const res = await fetch(url.toString());
 
-//   return blog;
-// }
+  if (!res.ok) {
+    throw new Error(`Failed to fetch blogs: ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json;
+}
+
 
 
 const SUPABASE_BUCKET_BASE = process.env.NEXT_PUBLIC_SUPABASE_BUCKET_BASE || "";

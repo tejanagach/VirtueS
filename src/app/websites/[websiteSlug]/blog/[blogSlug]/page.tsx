@@ -1,4 +1,5 @@
 // app/websites/[websiteSlug]/blog/[blogSlug]/page.tsx
+
 import { fetchBlogBySlug } from "@/app/utils/api";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
@@ -6,12 +7,14 @@ import ReactMarkdown from "react-markdown";
 export default async function BlogDetailPage({
   params,
 }: {
-  params: { blogSlug: string };
+  params: { websiteSlug: string; blogSlug: string };
 }) {
   const blog = await fetchBlogBySlug(params.blogSlug);
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 
-  if (!blog) return <p className="mt-32 text-center text-gray-600">Blog not found.</p>;
+  if (!blog) {
+    return <p className="mt-32 text-center text-gray-600">Blog not found.</p>;
+  }
 
   const { title, content, context, coverImage, images } = blog.attributes;
 
@@ -24,7 +27,7 @@ export default async function BlogDetailPage({
   const galleryImages = images?.data || [];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 pt-32 pb-16"> {/* top padding added */}
+    <div className="max-w-4xl mx-auto px-4 pt-32 pb-16">
       <h1 className="text-4xl font-extrabold mb-8 text-gray-900 leading-tight">{title}</h1>
 
       {/* Cover Image */}
@@ -66,8 +69,6 @@ export default async function BlogDetailPage({
           </ReactMarkdown>
         </div>
       )}
-
-      
 
       {/* Gallery Section */}
       {galleryImages.length > 0 && (
